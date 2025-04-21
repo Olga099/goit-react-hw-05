@@ -1,57 +1,55 @@
-import { useParams, useLocation, Link, Routes, Route } from 'react-router-dom';
-import { useEffect, useState, Suspense, lazy } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useLocation, Link, Outlet } from 'react-router-dom';
 import axios from 'axios';
-import styles from './MovieDetailsPage.module.css';
-
-const MovieCast = lazy(() => import('../../components/MovieCast/MovieCast'));
-const MovieReviews = lazy(() => import('../../components/MovieReviews/MovieReviews'));
 
 const MovieDetailsPage = () => {
   const { movieId } = useParams();
   const location = useLocation();
-  const backLinkHref = location.state?.from || '/';
+  
+  // ❗ Зберігаємо попередню локацію через useRef
+  const backLinkRef = useRef(location.state?.from || '/');
+
   const [movie, setMovie] = useState(null);
 
   useEffect(() => {
-    axios.get(`https://api.themoviedb.org/3/movie/${movieId}?language=en-US`, {
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
-      },
-    })
-      .then(response => setMovie(response.data))
-      .catch(error => console.error(error));
+    const fetchMovie = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
+            },
+          }
+        );
+        setMovie(response.data);
+      } catch (error) {
+        console.error('Failed to fetch movie details:', error);
+      }
+    };
+
+    fetchMovie();
   }, [movieId]);
 
-  if (!movie) {
-    return <p>Loading movie details...</p>;
-  }
+  if (!movie) return <div>Loading...</div>;
 
   return (
-    <div className={styles.container}>
-      <Link to={backLinkHref}>← Go back</Link>
-      <h1>{movie.title}</h1>
-      <p>User Score: {Math.round(movie.vote_average * 10)}%</p>
-      <p>Overview: {movie.overview}</p>
-      <p>Genres: {movie.genres.map(genre => genre.name).join(', ')}</p>
+    <div>
+      {/* 🔙 Посилання назад через useRef */}
+      <Link to={backLinkRef.current}>← Go back</Link>
+
+      <h2>{movie.title}</h2>
+      <p>{movie.overview}</p>
+      <p>Release date: {movie.release_date}</p>
 
       <hr />
-
-      <h2>Additional information</h2>
+      <p>Additional information:</p>
       <ul>
-        <li>
-          <Link to="cast" state={{ from: backLinkHref }}>Cast</Link>
-        </li>
-        <li>
-          <Link to="reviews" state={{ from: backLinkHref }}>Reviews</Link>
-        </li>
+        <li><Link to="cast">Cast</Link></li>
+        <li><Link to="reviews">Reviews</Link></li>
       </ul>
-
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="cast" element={<MovieCast />} />
-          <Route path="reviews" element={<MovieReviews />} />
-        </Routes>
-      </Suspense>
+      <hr />
+      <Outlet />
     </div>
   );
 };
