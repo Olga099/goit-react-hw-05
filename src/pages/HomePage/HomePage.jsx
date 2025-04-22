@@ -7,13 +7,23 @@ const HomePage = () => {
   const [movies, setMovies] = useState([]);
 
   useEffect(() => {
-    axios.get('https://api.themoviedb.org/3/movie/popular?language=en-US&page=1', {
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
-      },
-    })
-      .then(response => setMovies(response.data.results))
-      .catch(error => console.error(error));
+    const fetchMovies = async () => {
+      try {
+        const response = await axios.get(
+          'https://api.themoviedb.org/3/movie/popular?language=en-US&page=1',
+          {
+            headers: {
+              Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OWY4ZWYxMjQyMmQ3YmNlNWYyOTg3OTBmNWFkMDljNiIsIm5iZiI6MTc0NDU2ODQ1My4zOTIsInN1YiI6IjY3ZmMwMDg1ZWMyMmJhM2I0OWQ5NTgwZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WWkAXs-4idViml98zzqiZJjjl_hsxQ-ySBySRckooGw',
+            },
+          }
+        );
+        setMovies(response.data.results);
+      } catch (error) {
+        console.error('Failed to fetch movies:', error);
+      }
+    };
+
+    fetchMovies();
   }, []);
 
   return (

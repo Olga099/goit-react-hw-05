@@ -1,24 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, Link, Outlet } from 'react-router-dom';
 import axios from 'axios';
+import styles from './MovieDetailsPage.module.css';
 
 const MovieDetailsPage = () => {
   const { movieId } = useParams();
   const location = useLocation();
-  
-  // ❗ Зберігаємо попередню локацію через useRef
-  const backLinkRef = useRef(location.state?.from || '/');
-
+  const backLinkRef = useRef(location.state?.from || '/movies');
   const [movie, setMovie] = useState(null);
 
   useEffect(() => {
-    const fetchMovie = async () => {
+    const fetchDetails = async () => {
       try {
         const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${movieId}`,
+          `https://api.themoviedb.org/3/movie/${movieId}?language=en-US`,
           {
             headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
+              Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OWY4ZWYxMjQyMmQ3YmNlNWYyOTg3OTBmNWFkMDljNiIsIm5iZiI6MTc0NDU2ODQ1My4zOTIsInN1YiI6IjY3ZmMwMDg1ZWMyMmJhM2I0OWQ5NTgwZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WWkAXs-4idViml98zzqiZJjjl_hsxQ-ySBySRckooGw',
             },
           }
         );
@@ -28,27 +26,22 @@ const MovieDetailsPage = () => {
       }
     };
 
-    fetchMovie();
+    fetchDetails();
   }, [movieId]);
 
   if (!movie) return <div>Loading...</div>;
 
   return (
-    <div>
-      {/* 🔙 Посилання назад через useRef */}
-      <Link to={backLinkRef.current}>← Go back</Link>
-
+    <div className={styles.container}>
+      <Link to={backLinkRef.current}>Go back</Link>
       <h2>{movie.title}</h2>
       <p>{movie.overview}</p>
-      <p>Release date: {movie.release_date}</p>
 
-      <hr />
-      <p>Additional information:</p>
       <ul>
         <li><Link to="cast">Cast</Link></li>
         <li><Link to="reviews">Reviews</Link></li>
       </ul>
-      <hr />
+
       <Outlet />
     </div>
   );
