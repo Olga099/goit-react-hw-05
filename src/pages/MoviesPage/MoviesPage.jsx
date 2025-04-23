@@ -1,41 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import MovieList from '../../components/MovieList/MovieList';
 import styles from './MoviesPage.module.css';
 
 const MoviesPage = () => {
-  const [query, setQuery] = useState('');
   const [movies, setMovies] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get('query') || '';
 
-  const handleSearch = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=false&language=en-US&page=1`,
-        {
-          headers: {
-            Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OWY4ZWYxMjQyMmQ3YmNlNWYyOTg3OTBmNWFkMDljNiIsIm5iZiI6MTc0NDU2ODQ1My4zOTIsInN1YiI6IjY3ZmMwMDg1ZWMyMmJhM2I0OWQ5NTgwZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WWkAXs-4idViml98zzqiZJjjl_hsxQ-ySBySRckooGw',
-          },
-        }
-      );
-      setMovies(response.data.results);
-    } catch (error) {
-      console.error('Error fetching movies:', error);
+    const form = e.target;
+    const value = form.elements.search.value.trim();
+    if (value) {
+      setSearchParams({ query: value });
+    } else {
+      setSearchParams({});
     }
   };
 
+  useEffect(() => {
+    if (!query) return;
+
+    axios
+      .get(`https://api.themoviedb.org/3/search/movie?query=${query}`, {
+        headers: {
+          Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5OWY4ZWYxMjQyMmQ3YmNlNWYyOTg3OTBmNWFkMDljNiIsIm5iZiI6MTc0NDU2ODQ1My4zOTIsInN1YiI6IjY3ZmMwMDg1ZWMyMmJhM2I0OWQ5NTgwZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WWkAXs-4idViml98zzqiZJjjl_hsxQ-ySBySRckooGw',
+        },
+      })
+      .then((res) => setMovies(res.data.results))
+      .catch((err) => console.error(err));
+  }, [query]);
+
   return (
     <div className={styles.container}>
-      <h1>Search Movies</h1>
-      <form onSubmit={handleSearch}>
+      <form onSubmit={handleSubmit} className={styles.form}>
         <input
           type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by title"
+          name="search"
+          defaultValue={query}
+          placeholder="Search movies..."
+          className={styles.input}
         />
-        <button type="submit">Search</button>
+        <button type="submit" className={styles.button}>
+          Search
+        </button>
       </form>
+
       <MovieList movies={movies} />
     </div>
   );
